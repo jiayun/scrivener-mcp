@@ -205,6 +205,7 @@ pub struct GetMemoryParams {
 pub struct CheckConsistencyParams {
     /// Aspects to check: "characters", "timeline", "locations", "plot".
     #[serde(default)]
+    #[allow(dead_code)]
     pub aspects: Option<Vec<String>>,
 }
 

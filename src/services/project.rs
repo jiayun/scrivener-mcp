@@ -9,5 +9,6 @@ pub struct ProjectSession {
     pub project_path: PathBuf,
 
     /// When this session was started.
+    #[allow(dead_code)]
     pub opened_at: chrono::DateTime<chrono::Utc>,
 }

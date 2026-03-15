@@ -148,6 +148,7 @@ impl Database {
         Ok(entries)
     }
 
+    #[allow(dead_code)]
     pub fn delete_memory(&self, project_path: &str, key: &str) -> Result<()> {
         let conn = self.conn.lock().unwrap();
         conn.execute(
