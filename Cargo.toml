@@ -1,0 +1,33 @@
+[package]
+name = "scrivener-mcp"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "MCP server for Scrivener 3 projects — AI-powered writing assistant tools"
+repository = "https://github.com/jiayun/scrivener-mcp"
+keywords = ["mcp", "scrivener", "writing", "ai", "tools"]
+categories = ["command-line-utilities", "text-processing"]
+
+[[bin]]
+name = "scrivener-mcp"
+path = "src/main.rs"
+
+[dependencies]
+rmcp = { version = "1.2", features = ["server", "transport-io", "macros"] }
+scrivener = "0.1"
+writing-analysis = "0.1"
+rusqlite = { version = "0.38", features = ["bundled"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+chrono = { version = "0.4", features = ["serde"] }
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[dev-dependencies]
+anyhow = "1"
+tempfile = "3"
+pretty_assertions = "1"
