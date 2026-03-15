@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
 use rmcp::{
-    ServerHandler,
     handler::server::{router::tool::ToolRouter, wrapper::Parameters},
     model::*,
-    tool, tool_handler, tool_router,
+    tool, tool_handler, tool_router, ServerHandler,
 };
 use tokio::sync::Mutex;
 use uuid::Uuid;
@@ -165,21 +164,23 @@ fn compile_items(
 
 fn build_analysis(text: &str, analyses: Option<&[String]>) -> String {
     let run_all = analyses.is_none();
-    let should_run = |name: &str| -> bool {
-        run_all || analyses.unwrap().iter().any(|a| a == name)
-    };
+    let should_run =
+        |name: &str| -> bool { run_all || analyses.unwrap().iter().any(|a| a == name) };
 
     let mut result = serde_json::Map::new();
 
     if should_run("readability") {
         if let Ok(scores) = writing_analysis::analyze_readability(text) {
-            result.insert("readability".into(), serde_json::json!({
-                "flesch_kincaid_grade": scores.flesch_kincaid_grade,
-                "flesch_reading_ease": scores.flesch_reading_ease,
-                "smog_index": scores.smog_index,
-                "coleman_liau_index": scores.coleman_liau_index,
-                "automated_readability_index": scores.automated_readability_index,
-            }));
+            result.insert(
+                "readability".into(),
+                serde_json::json!({
+                    "flesch_kincaid_grade": scores.flesch_kincaid_grade,
+                    "flesch_reading_ease": scores.flesch_reading_ease,
+                    "smog_index": scores.smog_index,
+                    "coleman_liau_index": scores.coleman_liau_index,
+                    "automated_readability_index": scores.automated_readability_index,
+                }),
+            );
         }
     }
     if should_run("passive_voice") {
@@ -201,27 +202,36 @@ fn build_analysis(text: &str, analyses: Option<&[String]>) -> String {
     }
     if should_run("filter_words") {
         if let Ok(fw) = writing_analysis::detect_filter_words(text) {
-            result.insert("filter_words".into(), serde_json::json!({
-                "count": fw.count,
-                "percentage": fw.percentage,
-            }));
+            result.insert(
+                "filter_words".into(),
+                serde_json::json!({
+                    "count": fw.count,
+                    "percentage": fw.percentage,
+                }),
+            );
         }
     }
     if should_run("sentiment") {
         if let Ok(s) = writing_analysis::analyze_sentiment(text) {
-            result.insert("sentiment".into(), serde_json::json!({
-                "score": s.score,
-                "comparative": s.comparative,
-            }));
+            result.insert(
+                "sentiment".into(),
+                serde_json::json!({
+                    "score": s.score,
+                    "comparative": s.comparative,
+                }),
+            );
         }
     }
     if should_run("sentence_variety") {
         if let Ok(sv) = writing_analysis::analyze_sentence_variety(text) {
-            result.insert("sentence_variety".into(), serde_json::json!({
-                "avg_length": sv.avg_length,
-                "length_variance": sv.length_variance,
-                "structure_variety": sv.structure_variety,
-            }));
+            result.insert(
+                "sentence_variety".into(),
+                serde_json::json!({
+                    "avg_length": sv.avg_length,
+                    "length_variance": sv.length_variance,
+                    "structure_variety": sv.structure_variety,
+                }),
+            );
         }
     }
 
@@ -232,7 +242,10 @@ fn build_analysis(text: &str, analyses: Option<&[String]>) -> String {
 
 #[tool_router(router = project_router)]
 impl ScrivenerMcp {
-    #[tool(name = "open_project", description = "Open a Scrivener 3 project (.scriv bundle) from the specified path")]
+    #[tool(
+        name = "open_project",
+        description = "Open a Scrivener 3 project (.scriv bundle) from the specified path"
+    )]
     async fn open_project(&self, Parameters(params): Parameters<OpenProjectParams>) -> String {
         match self.do_open_project(params).await {
             Ok(s) => s,
@@ -240,19 +253,27 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "close_project", description = "Close the currently open Scrivener project")]
+    #[tool(
+        name = "close_project",
+        description = "Close the currently open Scrivener project"
+    )]
     async fn close_project(&self) -> String {
         let mut session = self.session.lock().await;
         match session.take() {
             Some(s) => {
-                let _ = self.database.log_session(&s.project_path.display().to_string(), "close", None);
+                let _ =
+                    self.database
+                        .log_session(&s.project_path.display().to_string(), "close", None);
                 format!("Project closed: {}", s.project_path.display())
             }
             None => "No project is currently open".to_string(),
         }
     }
 
-    #[tool(name = "refresh_project", description = "Reload the current project from disk to pick up external changes")]
+    #[tool(
+        name = "refresh_project",
+        description = "Reload the current project from disk to pick up external changes"
+    )]
     async fn refresh_project(&self) -> String {
         match self.do_refresh_project().await {
             Ok(s) => s,
@@ -260,13 +281,22 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "get_structure", description = "Get the hierarchical binder structure showing all documents and folders")]
+    #[tool(
+        name = "get_structure",
+        description = "Get the hierarchical binder structure showing all documents and folders"
+    )]
     async fn get_structure(&self) -> String {
         let session = self.session.lock().await;
         match session.as_ref() {
             None => "Error: No project is currently open".to_string(),
             Some(s) => {
-                let items: Vec<BinderItemInfo> = s.project.binder.root.iter().map(binder_item_to_info).collect();
+                let items: Vec<BinderItemInfo> = s
+                    .project
+                    .binder
+                    .root
+                    .iter()
+                    .map(binder_item_to_info)
+                    .collect();
                 serde_json::to_string_pretty(&items).unwrap_or_default()
             }
         }
@@ -277,7 +307,10 @@ impl ScrivenerMcp {
 
 #[tool_router(router = document_router)]
 impl ScrivenerMcp {
-    #[tool(name = "read_document", description = "Read the text content of a document by UUID or title")]
+    #[tool(
+        name = "read_document",
+        description = "Read the text content of a document by UUID or title"
+    )]
     async fn read_document(&self, Parameters(params): Parameters<ReadDocumentParams>) -> String {
         match self.do_read_document(params).await {
             Ok(s) => s,
@@ -285,7 +318,10 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "write_document", description = "Write new text content to a document (replaces existing content)")]
+    #[tool(
+        name = "write_document",
+        description = "Write new text content to a document (replaces existing content)"
+    )]
     async fn write_document(&self, Parameters(params): Parameters<WriteDocumentParams>) -> String {
         match self.do_write_document(params).await {
             Ok(s) => s,
@@ -293,16 +329,28 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "create_document", description = "Create a new document in the specified folder (defaults to Draft)")]
-    async fn create_document(&self, Parameters(params): Parameters<CreateDocumentParams>) -> String {
+    #[tool(
+        name = "create_document",
+        description = "Create a new document in the specified folder (defaults to Draft)"
+    )]
+    async fn create_document(
+        &self,
+        Parameters(params): Parameters<CreateDocumentParams>,
+    ) -> String {
         match self.do_create_document(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "delete_document", description = "Move a document to the trash (can be recovered later)")]
-    async fn delete_document(&self, Parameters(params): Parameters<DeleteDocumentParams>) -> String {
+    #[tool(
+        name = "delete_document",
+        description = "Move a document to the trash (can be recovered later)"
+    )]
+    async fn delete_document(
+        &self,
+        Parameters(params): Parameters<DeleteDocumentParams>,
+    ) -> String {
         match self.do_delete_document(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
@@ -310,14 +358,20 @@ impl ScrivenerMcp {
     }
 
     #[tool(name = "rename_document", description = "Rename a document or folder")]
-    async fn rename_document(&self, Parameters(params): Parameters<RenameDocumentParams>) -> String {
+    async fn rename_document(
+        &self,
+        Parameters(params): Parameters<RenameDocumentParams>,
+    ) -> String {
         match self.do_rename_document(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "move_document", description = "Move a document or folder to a different parent folder")]
+    #[tool(
+        name = "move_document",
+        description = "Move a document or folder to a different parent folder"
+    )]
     async fn move_document(&self, Parameters(params): Parameters<MoveDocumentParams>) -> String {
         match self.do_move_document(params).await {
             Ok(s) => s,
@@ -325,16 +379,28 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "get_document_info", description = "Get detailed information about a document including metadata, word count, and binder path")]
-    async fn get_document_info(&self, Parameters(params): Parameters<GetDocumentInfoParams>) -> String {
+    #[tool(
+        name = "get_document_info",
+        description = "Get detailed information about a document including metadata, word count, and binder path"
+    )]
+    async fn get_document_info(
+        &self,
+        Parameters(params): Parameters<GetDocumentInfoParams>,
+    ) -> String {
         match self.do_get_document_info(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "update_metadata", description = "Update document metadata: synopsis, notes, and/or keywords")]
-    async fn update_metadata(&self, Parameters(params): Parameters<UpdateMetadataParams>) -> String {
+    #[tool(
+        name = "update_metadata",
+        description = "Update document metadata: synopsis, notes, and/or keywords"
+    )]
+    async fn update_metadata(
+        &self,
+        Parameters(params): Parameters<UpdateMetadataParams>,
+    ) -> String {
         match self.do_update_metadata(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
@@ -346,7 +412,10 @@ impl ScrivenerMcp {
 
 #[tool_router(router = search_router)]
 impl ScrivenerMcp {
-    #[tool(name = "search_content", description = "Search for text content across all documents in the project")]
+    #[tool(
+        name = "search_content",
+        description = "Search for text content across all documents in the project"
+    )]
     async fn search_content(&self, Parameters(params): Parameters<SearchContentParams>) -> String {
         match self.do_search_content(params).await {
             Ok(s) => s,
@@ -354,7 +423,10 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "list_trash", description = "List all documents currently in the trash")]
+    #[tool(
+        name = "list_trash",
+        description = "List all documents currently in the trash"
+    )]
     async fn list_trash(&self) -> String {
         let session = self.session.lock().await;
         match session.as_ref() {
@@ -372,7 +444,10 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "search_trash", description = "Search for documents in the trash by title")]
+    #[tool(
+        name = "search_trash",
+        description = "Search for documents in the trash by title"
+    )]
     async fn search_trash(&self, Parameters(params): Parameters<SearchTrashParams>) -> String {
         let session = self.session.lock().await;
         match session.as_ref() {
@@ -397,8 +472,14 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "recover_document", description = "Recover a document from the trash back into the project binder")]
-    async fn recover_document(&self, Parameters(params): Parameters<RecoverDocumentParams>) -> String {
+    #[tool(
+        name = "recover_document",
+        description = "Recover a document from the trash back into the project binder"
+    )]
+    async fn recover_document(
+        &self,
+        Parameters(params): Parameters<RecoverDocumentParams>,
+    ) -> String {
         match self.do_recover_document(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
@@ -410,15 +491,24 @@ impl ScrivenerMcp {
 
 #[tool_router(router = compile_router)]
 impl ScrivenerMcp {
-    #[tool(name = "compile_documents", description = "Compile documents in reading order into a single text output")]
-    async fn compile_documents(&self, Parameters(params): Parameters<CompileDocumentsParams>) -> String {
+    #[tool(
+        name = "compile_documents",
+        description = "Compile documents in reading order into a single text output"
+    )]
+    async fn compile_documents(
+        &self,
+        Parameters(params): Parameters<CompileDocumentsParams>,
+    ) -> String {
         match self.do_compile_documents(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "export_project", description = "Export the entire project draft as a single document")]
+    #[tool(
+        name = "export_project",
+        description = "Export the entire project draft as a single document"
+    )]
     async fn export_project(&self, Parameters(params): Parameters<ExportProjectParams>) -> String {
         match self.do_export_project(params).await {
             Ok(s) => s,
@@ -426,7 +516,10 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "get_statistics", description = "Get project statistics: document count, word count, and per-document breakdown")]
+    #[tool(
+        name = "get_statistics",
+        description = "Get project statistics: document count, word count, and per-document breakdown"
+    )]
     async fn get_statistics(&self) -> String {
         match self.do_get_statistics().await {
             Ok(s) => s,
@@ -439,15 +532,24 @@ impl ScrivenerMcp {
 
 #[tool_router(router = analysis_router)]
 impl ScrivenerMcp {
-    #[tool(name = "analyze_document", description = "Analyze a document for readability, passive voice, clichés, filter words, sentiment, and sentence variety")]
-    async fn analyze_document(&self, Parameters(params): Parameters<AnalyzeDocumentParams>) -> String {
+    #[tool(
+        name = "analyze_document",
+        description = "Analyze a document for readability, passive voice, clichés, filter words, sentiment, and sentence variety"
+    )]
+    async fn analyze_document(
+        &self,
+        Parameters(params): Parameters<AnalyzeDocumentParams>,
+    ) -> String {
         match self.do_analyze_document(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "get_word_count", description = "Get word count for a specific document or the entire project")]
+    #[tool(
+        name = "get_word_count",
+        description = "Get word count for a specific document or the entire project"
+    )]
     async fn get_word_count(&self, Parameters(params): Parameters<GetWordCountParams>) -> String {
         match self.do_get_word_count(params).await {
             Ok(s) => s,
@@ -455,8 +557,14 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "analyze_readability", description = "Analyze readability of a document (Flesch-Kincaid, SMOG, Coleman-Liau, ARI)")]
-    async fn analyze_readability(&self, Parameters(params): Parameters<AnalyzeReadabilityParams>) -> String {
+    #[tool(
+        name = "analyze_readability",
+        description = "Analyze readability of a document (Flesch-Kincaid, SMOG, Coleman-Liau, ARI)"
+    )]
+    async fn analyze_readability(
+        &self,
+        Parameters(params): Parameters<AnalyzeReadabilityParams>,
+    ) -> String {
         match self.do_analyze_readability(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
@@ -468,7 +576,10 @@ impl ScrivenerMcp {
 
 #[tool_router(router = memory_router)]
 impl ScrivenerMcp {
-    #[tool(name = "update_memory", description = "Store or update a memory entry for the current project (persists across sessions)")]
+    #[tool(
+        name = "update_memory",
+        description = "Store or update a memory entry for the current project (persists across sessions)"
+    )]
     async fn update_memory(&self, Parameters(params): Parameters<UpdateMemoryParams>) -> String {
         match self.do_update_memory(params).await {
             Ok(s) => s,
@@ -476,7 +587,10 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "get_memory", description = "Retrieve stored memory entries for the current project")]
+    #[tool(
+        name = "get_memory",
+        description = "Retrieve stored memory entries for the current project"
+    )]
     async fn get_memory(&self, Parameters(params): Parameters<GetMemoryParams>) -> String {
         match self.do_get_memory(params).await {
             Ok(s) => s,
@@ -484,15 +598,24 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "check_consistency", description = "Check stored project memory against current document state for inconsistencies")]
-    async fn check_consistency(&self, Parameters(params): Parameters<CheckConsistencyParams>) -> String {
+    #[tool(
+        name = "check_consistency",
+        description = "Check stored project memory against current document state for inconsistencies"
+    )]
+    async fn check_consistency(
+        &self,
+        Parameters(params): Parameters<CheckConsistencyParams>,
+    ) -> String {
         match self.do_check_consistency(params).await {
             Ok(s) => s,
             Err(e) => format!("Error: {}", e),
         }
     }
 
-    #[tool(name = "get_project_summary", description = "Get a comprehensive project summary including info, statistics, and stored memories")]
+    #[tool(
+        name = "get_project_summary",
+        description = "Get a comprehensive project summary including info, statistics, and stored memories"
+    )]
     async fn get_project_summary(&self) -> String {
         match self.do_get_project_summary().await {
             Ok(s) => s,
@@ -505,7 +628,10 @@ impl ScrivenerMcp {
 
 #[tool_router(router = stats_router)]
 impl ScrivenerMcp {
-    #[tool(name = "get_writing_stats", description = "Get detailed writing statistics with per-document word count breakdown")]
+    #[tool(
+        name = "get_writing_stats",
+        description = "Get detailed writing statistics with per-document word count breakdown"
+    )]
     async fn get_writing_stats(&self) -> String {
         match self.do_get_statistics().await {
             Ok(s) => s,
@@ -513,10 +639,15 @@ impl ScrivenerMcp {
         }
     }
 
-    #[tool(name = "get_session_info", description = "Get information about the current MCP server session")]
+    #[tool(
+        name = "get_session_info",
+        description = "Get information about the current MCP server session"
+    )]
     async fn get_session_info(&self) -> String {
         let session = self.session.lock().await;
-        let current_project = session.as_ref().map(|s| s.project_path.display().to_string());
+        let current_project = session
+            .as_ref()
+            .map(|s| s.project_path.display().to_string());
         let info = SessionInfo {
             server_version: env!("CARGO_PKG_VERSION").to_string(),
             current_project,
@@ -532,20 +663,26 @@ impl ScrivenerMcp {
     async fn do_open_project(&self, params: OpenProjectParams) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         if let Some(ref s) = *session {
-            return Err(McpServerError::ProjectAlreadyOpen { path: s.project_path.display().to_string() });
+            return Err(McpServerError::ProjectAlreadyOpen {
+                path: s.project_path.display().to_string(),
+            });
         }
 
         let path = std::path::PathBuf::from(&params.path);
         let project = tokio::task::spawn_blocking(move || scrivener::Project::open(&path))
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         let stats = {
             let p = project.clone();
             tokio::task::spawn_blocking(move || p.statistics())
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?
         };
 
         let info = ProjectInfo {
@@ -557,7 +694,11 @@ impl ScrivenerMcp {
             total_words: stats.total_words,
         };
 
-        let _ = self.database.log_session(&project.path.display().to_string(), "open", Some(&info.title));
+        let _ = self.database.log_session(
+            &project.path.display().to_string(),
+            "open",
+            Some(&info.title),
+        );
 
         *session = Some(ProjectSession {
             project,
@@ -575,11 +716,17 @@ impl ScrivenerMcp {
 
         let project = tokio::task::spawn_blocking(move || scrivener::Project::open(&path))
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         let pp = project.path.clone();
-        *session = Some(ProjectSession { project, project_path: pp, opened_at: chrono::Utc::now() });
+        *session = Some(ProjectSession {
+            project,
+            project_path: pp,
+            opened_at: chrono::Utc::now(),
+        });
         Ok("Project refreshed successfully".to_string())
     }
 
@@ -588,15 +735,22 @@ impl ScrivenerMcp {
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
 
-        let item = s.project.binder.find_by_uuid(uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier.clone() })?;
+        let item = s
+            .project
+            .binder
+            .find_by_uuid(uuid)
+            .ok_or(McpServerError::DocumentNotFound {
+                identifier: params.identifier.clone(),
+            })?;
 
         if let scrivener::BinderItem::Document(doc) = item {
             let pp = s.project.path.clone();
             let dc = doc.clone();
             let content = tokio::task::spawn_blocking(move || dc.read_content(&pp))
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?
                 .map_err(McpServerError::Scrivener)?;
 
             let mut text = content.plain_text.unwrap_or_default();
@@ -608,7 +762,9 @@ impl ScrivenerMcp {
             }
             Ok(text)
         } else {
-            Err(McpServerError::InvalidParameter { message: format!("'{}' is a folder", params.identifier) })
+            Err(McpServerError::InvalidParameter {
+                message: format!("'{}' is a folder", params.identifier),
+            })
         }
     }
 
@@ -618,27 +774,43 @@ impl ScrivenerMcp {
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
         let pp = s.project.path.clone();
 
-        let item = s.project.binder.find_by_uuid_mut(uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier.clone() })?;
+        let item =
+            s.project
+                .binder
+                .find_by_uuid_mut(uuid)
+                .ok_or(McpServerError::DocumentNotFound {
+                    identifier: params.identifier.clone(),
+                })?;
 
         if let scrivener::BinderItem::Document(doc) = item {
-            doc.write_content(&pp, &params.content).map_err(McpServerError::Scrivener)?;
+            doc.write_content(&pp, &params.content)
+                .map_err(McpServerError::Scrivener)?;
             let wc = params.content.split_whitespace().count();
             Ok(format!("Document updated. Word count: {}", wc))
         } else {
-            Err(McpServerError::InvalidParameter { message: format!("'{}' is a folder", params.identifier) })
+            Err(McpServerError::InvalidParameter {
+                message: format!("'{}' is a folder", params.identifier),
+            })
         }
     }
 
-    async fn do_create_document(&self, params: CreateDocumentParams) -> crate::error::Result<String> {
+    async fn do_create_document(
+        &self,
+        params: CreateDocumentParams,
+    ) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
 
         let new_uuid = Uuid::new_v4();
-        let mut doc = scrivener::Document { uuid: new_uuid, title: params.title.clone(), ..Default::default() };
+        let mut doc = scrivener::Document {
+            uuid: new_uuid,
+            title: params.title.clone(),
+            ..Default::default()
+        };
 
         if let Some(content) = &params.content {
-            doc.write_content(&s.project.path, content).map_err(McpServerError::Scrivener)?;
+            doc.write_content(&s.project.path, content)
+                .map_err(McpServerError::Scrivener)?;
         }
 
         let new_item = scrivener::BinderItem::Document(doc);
@@ -646,34 +818,59 @@ impl ScrivenerMcp {
         if let Some(parent_uuid_str) = &params.parent_uuid {
             let parent_uuid = Uuid::parse_str(parent_uuid_str).map_err(McpServerError::Uuid)?;
             s.project.binder.root.push(new_item);
-            s.project.binder.move_item(new_uuid, Some(parent_uuid)).map_err(McpServerError::Scrivener)?;
+            s.project
+                .binder
+                .move_item(new_uuid, Some(parent_uuid))
+                .map_err(McpServerError::Scrivener)?;
         } else {
             let first_folder = s.project.binder.root.iter().find_map(|item| {
-                if let scrivener::BinderItem::Folder(f) = item { Some(f.uuid) } else { None }
+                if let scrivener::BinderItem::Folder(f) = item {
+                    Some(f.uuid)
+                } else {
+                    None
+                }
             });
             s.project.binder.root.push(new_item);
             if let Some(fid) = first_folder {
-                s.project.binder.move_item(new_uuid, Some(fid)).map_err(McpServerError::Scrivener)?;
+                s.project
+                    .binder
+                    .move_item(new_uuid, Some(fid))
+                    .map_err(McpServerError::Scrivener)?;
             }
         }
 
         let project = s.project.clone();
         tokio::task::spawn_blocking(move || project.save())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
-        Ok(serde_json::to_string_pretty(&serde_json::json!({"uuid": new_uuid.to_string(), "title": params.title}))?)
+        Ok(serde_json::to_string_pretty(
+            &serde_json::json!({"uuid": new_uuid.to_string(), "title": params.title}),
+        )?)
     }
 
-    async fn do_delete_document(&self, params: DeleteDocumentParams) -> crate::error::Result<String> {
+    async fn do_delete_document(
+        &self,
+        params: DeleteDocumentParams,
+    ) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
-        let title = s.project.binder.find_by_uuid(uuid).map(|i| i.title().to_string()).unwrap_or_default();
+        let title = s
+            .project
+            .binder
+            .find_by_uuid(uuid)
+            .map(|i| i.title().to_string())
+            .unwrap_or_default();
 
-        let removed = remove_from_binder(&mut s.project.binder.root, uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier })?;
+        let removed = remove_from_binder(&mut s.project.binder.root, uuid).ok_or(
+            McpServerError::DocumentNotFound {
+                identifier: params.identifier,
+            },
+        )?;
 
         let trashed = match removed {
             scrivener::BinderItem::Document(d) => scrivener::TrashedItem::Document(d),
@@ -684,19 +881,29 @@ impl ScrivenerMcp {
         let project = s.project.clone();
         tokio::task::spawn_blocking(move || project.save())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         Ok(format!("Moved to trash: {}", title))
     }
 
-    async fn do_rename_document(&self, params: RenameDocumentParams) -> crate::error::Result<String> {
+    async fn do_rename_document(
+        &self,
+        params: RenameDocumentParams,
+    ) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
 
-        let item = s.project.binder.find_by_uuid_mut(uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier.clone() })?;
+        let item =
+            s.project
+                .binder
+                .find_by_uuid_mut(uuid)
+                .ok_or(McpServerError::DocumentNotFound {
+                    identifier: params.identifier.clone(),
+                })?;
 
         let old_title = item.title().to_string();
         match item {
@@ -707,7 +914,9 @@ impl ScrivenerMcp {
         let project = s.project.clone();
         tokio::task::spawn_blocking(move || project.save())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         Ok(format!("Renamed '{}' → '{}'", old_title, params.new_title))
@@ -717,27 +926,47 @@ impl ScrivenerMcp {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = Uuid::parse_str(&params.uuid).map_err(McpServerError::Uuid)?;
-        let target = params.target_parent_uuid.as_deref().map(Uuid::parse_str).transpose().map_err(McpServerError::Uuid)?;
+        let target = params
+            .target_parent_uuid
+            .as_deref()
+            .map(Uuid::parse_str)
+            .transpose()
+            .map_err(McpServerError::Uuid)?;
 
-        s.project.binder.move_item(uuid, target).map_err(McpServerError::Scrivener)?;
+        s.project
+            .binder
+            .move_item(uuid, target)
+            .map_err(McpServerError::Scrivener)?;
 
         let project = s.project.clone();
         tokio::task::spawn_blocking(move || project.save())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
-        Ok(format!("Moved {} to {}", params.uuid, params.target_parent_uuid.as_deref().unwrap_or("root")))
+        Ok(format!(
+            "Moved {} to {}",
+            params.uuid,
+            params.target_parent_uuid.as_deref().unwrap_or("root")
+        ))
     }
 
-    async fn do_get_document_info(&self, params: GetDocumentInfoParams) -> crate::error::Result<String> {
+    async fn do_get_document_info(
+        &self,
+        params: GetDocumentInfoParams,
+    ) -> crate::error::Result<String> {
         let session = self.session.lock().await;
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
 
         let flat = s.project.binder.flatten();
-        let (_item, path) = flat.iter().find(|(i, _)| i.uuid() == uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier.clone() })?;
+        let (_item, path) = flat.iter().find(|(i, _)| i.uuid() == uuid).ok_or(
+            McpServerError::DocumentNotFound {
+                identifier: params.identifier.clone(),
+            },
+        )?;
 
         let item = s.project.binder.find_by_uuid(uuid).unwrap();
         if let scrivener::BinderItem::Document(doc) = item {
@@ -746,10 +975,14 @@ impl ScrivenerMcp {
             let dc = doc.clone();
             let content = tokio::task::spawn_blocking(move || dc.read_content(&pp))
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?
                 .map_err(McpServerError::Scrivener)?;
 
-            let (wc, cc) = content.formatted.as_ref()
+            let (wc, cc) = content
+                .formatted
+                .as_ref()
                 .map(|f| (f.word_count, f.character_count))
                 .unwrap_or((0, 0));
 
@@ -767,39 +1000,62 @@ impl ScrivenerMcp {
             };
             Ok(serde_json::to_string_pretty(&info)?)
         } else {
-            let info = serde_json::json!({"uuid": uuid.to_string(), "item_type": "folder", "path": path});
+            let info =
+                serde_json::json!({"uuid": uuid.to_string(), "item_type": "folder", "path": path});
             Ok(serde_json::to_string_pretty(&info)?)
         }
     }
 
-    async fn do_update_metadata(&self, params: UpdateMetadataParams) -> crate::error::Result<String> {
+    async fn do_update_metadata(
+        &self,
+        params: UpdateMetadataParams,
+    ) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
         let pp = s.project.path.clone();
 
-        let item = s.project.binder.find_by_uuid_mut(uuid)
-            .ok_or(McpServerError::DocumentNotFound { identifier: params.identifier.clone() })?;
+        let item =
+            s.project
+                .binder
+                .find_by_uuid_mut(uuid)
+                .ok_or(McpServerError::DocumentNotFound {
+                    identifier: params.identifier.clone(),
+                })?;
 
         if let scrivener::BinderItem::Document(doc) = item {
             if let Some(synopsis) = &params.synopsis {
-                doc.update_synopsis(&pp, synopsis).map_err(McpServerError::Scrivener)?;
+                doc.update_synopsis(&pp, synopsis)
+                    .map_err(McpServerError::Scrivener)?;
             }
             if let Some(notes) = &params.notes {
-                doc.update_notes(&pp, notes).map_err(McpServerError::Scrivener)?;
+                doc.update_notes(&pp, notes)
+                    .map_err(McpServerError::Scrivener)?;
             }
-            if let Some(kws) = &params.add_keywords { for kw in kws { doc.add_keyword(kw); } }
-            if let Some(kws) = &params.remove_keywords { for kw in kws { doc.remove_keyword(kw); } }
+            if let Some(kws) = &params.add_keywords {
+                for kw in kws {
+                    doc.add_keyword(kw);
+                }
+            }
+            if let Some(kws) = &params.remove_keywords {
+                for kw in kws {
+                    doc.remove_keyword(kw);
+                }
+            }
 
             let project = s.project.clone();
             tokio::task::spawn_blocking(move || project.save())
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?
                 .map_err(McpServerError::Scrivener)?;
 
             Ok(format!("Metadata updated for: {}", params.identifier))
         } else {
-            Err(McpServerError::InvalidParameter { message: format!("'{}' is a folder", params.identifier) })
+            Err(McpServerError::InvalidParameter {
+                message: format!("'{}' is a folder", params.identifier),
+            })
         }
     }
 
@@ -812,40 +1068,65 @@ impl ScrivenerMcp {
         let max_results = params.max_results.unwrap_or(50);
 
         let results = tokio::task::spawn_blocking(move || {
-            if use_regex { project.search_regex(&query) } else { Ok(project.search(&query)) }
+            if use_regex {
+                project.search_regex(&query)
+            } else {
+                Ok(project.search(&query))
+            }
         })
         .await
-        .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+        .map_err(|e| McpServerError::InvalidParameter {
+            message: e.to_string(),
+        })?
         .map_err(McpServerError::Scrivener)?;
 
-        let items: Vec<SearchResultItem> = results.into_iter().take(max_results).map(|r| {
-            SearchResultItem {
+        let items: Vec<SearchResultItem> = results
+            .into_iter()
+            .take(max_results)
+            .map(|r| SearchResultItem {
                 document_uuid: r.document_uuid.to_string(),
                 document_title: r.document_title,
-                matches: r.matches.into_iter().map(|m| SearchMatchItem { context: m.context, offset: m.position.0 }).collect(),
-            }
-        }).collect();
+                matches: r
+                    .matches
+                    .into_iter()
+                    .map(|m| SearchMatchItem {
+                        context: m.context,
+                        offset: m.position.0,
+                    })
+                    .collect(),
+            })
+            .collect();
 
         Ok(serde_json::to_string_pretty(&items)?)
     }
 
-    async fn do_recover_document(&self, params: RecoverDocumentParams) -> crate::error::Result<String> {
+    async fn do_recover_document(
+        &self,
+        params: RecoverDocumentParams,
+    ) -> crate::error::Result<String> {
         let mut session = self.session.lock().await;
         let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = Uuid::parse_str(&params.uuid).map_err(McpServerError::Uuid)?;
 
-        s.project.recover_from_trash(uuid).map_err(McpServerError::Scrivener)?;
+        s.project
+            .recover_from_trash(uuid)
+            .map_err(McpServerError::Scrivener)?;
 
         let project = s.project.clone();
         tokio::task::spawn_blocking(move || project.save())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         Ok(format!("Document recovered: {}", params.uuid))
     }
 
-    async fn do_compile_documents(&self, params: CompileDocumentsParams) -> crate::error::Result<String> {
+    async fn do_compile_documents(
+        &self,
+        params: CompileDocumentsParams,
+    ) -> crate::error::Result<String> {
         let session = self.session.lock().await;
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let format = params.format.as_deref().unwrap_or("text");
@@ -855,19 +1136,35 @@ impl ScrivenerMcp {
             let uuid = Uuid::parse_str(uuid_str).map_err(McpServerError::Uuid)?;
             match s.project.binder.find_by_uuid(uuid) {
                 Some(scrivener::BinderItem::Folder(f)) => f.children.clone(),
-                _ => return Err(McpServerError::DocumentNotFound { identifier: uuid_str.clone() }),
+                _ => {
+                    return Err(McpServerError::DocumentNotFound {
+                        identifier: uuid_str.clone(),
+                    })
+                }
             }
         } else {
-            s.project.binder.root.iter().find_map(|item| {
-                if let scrivener::BinderItem::Folder(f) = item { Some(f.children.clone()) } else { None }
-            }).unwrap_or_default()
+            s.project
+                .binder
+                .root
+                .iter()
+                .find_map(|item| {
+                    if let scrivener::BinderItem::Folder(f) = item {
+                        Some(f.children.clone())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_default()
         };
 
         let pp = s.project.path.clone();
         let fmt = format.to_string();
-        let compiled = tokio::task::spawn_blocking(move || compile_items(&items, &pp, compile_only, &fmt))
-            .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+        let compiled =
+            tokio::task::spawn_blocking(move || compile_items(&items, &pp, compile_only, &fmt))
+                .await
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?;
 
         Ok(compiled)
     }
@@ -883,10 +1180,14 @@ impl ScrivenerMcp {
             let mut output = String::new();
             if fmt == "markdown" {
                 output.push_str(&format!("# {}\n\n", project.metadata.title));
-                if let Some(author) = &project.metadata.author { output.push_str(&format!("*By {}*\n\n---\n\n", author)); }
+                if let Some(author) = &project.metadata.author {
+                    output.push_str(&format!("*By {}*\n\n---\n\n", author));
+                }
             } else {
                 output.push_str(&format!("{}\n", project.metadata.title));
-                if let Some(author) = &project.metadata.author { output.push_str(&format!("By {}\n", author)); }
+                if let Some(author) = &project.metadata.author {
+                    output.push_str(&format!("By {}\n", author));
+                }
                 output.push_str("\n---\n\n");
             }
             for item in &project.binder.root {
@@ -897,7 +1198,9 @@ impl ScrivenerMcp {
             output
         })
         .await
-        .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+        .map_err(|e| McpServerError::InvalidParameter {
+            message: e.to_string(),
+        })?;
 
         Ok(compiled)
     }
@@ -909,15 +1212,26 @@ impl ScrivenerMcp {
 
         let stats = tokio::task::spawn_blocking(move || project.statistics())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?;
 
         let flat = s.project.binder.flatten();
-        let words_by_document: Vec<DocumentWordCount> = flat.iter().filter_map(|(item, _)| {
-            if let scrivener::BinderItem::Document(doc) = item {
-                let wc = stats.words_by_document.get(&doc.uuid).copied().unwrap_or(0);
-                Some(DocumentWordCount { uuid: doc.uuid.to_string(), title: doc.title.clone(), word_count: wc })
-            } else { None }
-        }).collect();
+        let words_by_document: Vec<DocumentWordCount> = flat
+            .iter()
+            .filter_map(|(item, _)| {
+                if let scrivener::BinderItem::Document(doc) = item {
+                    let wc = stats.words_by_document.get(&doc.uuid).copied().unwrap_or(0);
+                    Some(DocumentWordCount {
+                        uuid: doc.uuid.to_string(),
+                        title: doc.title.clone(),
+                        word_count: wc,
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         let ws = WritingStats {
             total_words: stats.total_words,
@@ -930,29 +1244,43 @@ impl ScrivenerMcp {
         Ok(serde_json::to_string_pretty(&ws)?)
     }
 
-    async fn do_analyze_document(&self, params: AnalyzeDocumentParams) -> crate::error::Result<String> {
+    async fn do_analyze_document(
+        &self,
+        params: AnalyzeDocumentParams,
+    ) -> crate::error::Result<String> {
         let session = self.session.lock().await;
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
 
         let doc = match s.project.binder.find_by_uuid(uuid) {
             Some(scrivener::BinderItem::Document(d)) => d.clone(),
-            _ => return Err(McpServerError::InvalidParameter { message: "Cannot analyze a folder".into() }),
+            _ => {
+                return Err(McpServerError::InvalidParameter {
+                    message: "Cannot analyze a folder".into(),
+                })
+            }
         };
 
         let pp = s.project.path.clone();
         let content = tokio::task::spawn_blocking(move || doc.read_content(&pp))
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         let text = content.plain_text.unwrap_or_default();
-        if text.trim().is_empty() { return Ok("Document is empty, no analysis available.".to_string()); }
+        if text.trim().is_empty() {
+            return Ok("Document is empty, no analysis available.".to_string());
+        }
 
         let analyses = params.analyses;
-        let result = tokio::task::spawn_blocking(move || build_analysis(&text, analyses.as_deref()))
-            .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+        let result =
+            tokio::task::spawn_blocking(move || build_analysis(&text, analyses.as_deref()))
+                .await
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?;
 
         Ok(result)
     }
@@ -965,13 +1293,19 @@ impl ScrivenerMcp {
             let uuid = find_doc_uuid(&s.project.binder, identifier)?;
             let doc = match s.project.binder.find_by_uuid(uuid) {
                 Some(scrivener::BinderItem::Document(d)) => d.clone(),
-                _ => return Err(McpServerError::InvalidParameter { message: "Cannot count words for a folder".into() }),
+                _ => {
+                    return Err(McpServerError::InvalidParameter {
+                        message: "Cannot count words for a folder".into(),
+                    })
+                }
             };
 
             let pp = s.project.path.clone();
             let content = tokio::task::spawn_blocking(move || doc.read_content(&pp))
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?
                 .map_err(McpServerError::Scrivener)?;
 
             let text = content.plain_text.unwrap_or_default();
@@ -984,7 +1318,9 @@ impl ScrivenerMcp {
             let project = s.project.clone();
             let stats = tokio::task::spawn_blocking(move || project.statistics())
                 .await
-                .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+                .map_err(|e| McpServerError::InvalidParameter {
+                    message: e.to_string(),
+                })?;
 
             let result = serde_json::json!({
                 "total_words": stats.total_words,
@@ -995,39 +1331,54 @@ impl ScrivenerMcp {
         }
     }
 
-    async fn do_analyze_readability(&self, params: AnalyzeReadabilityParams) -> crate::error::Result<String> {
+    async fn do_analyze_readability(
+        &self,
+        params: AnalyzeReadabilityParams,
+    ) -> crate::error::Result<String> {
         let session = self.session.lock().await;
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let uuid = find_doc_uuid(&s.project.binder, &params.identifier)?;
 
         let doc = match s.project.binder.find_by_uuid(uuid) {
             Some(scrivener::BinderItem::Document(d)) => d.clone(),
-            _ => return Err(McpServerError::InvalidParameter { message: "Cannot analyze a folder".into() }),
+            _ => {
+                return Err(McpServerError::InvalidParameter {
+                    message: "Cannot analyze a folder".into(),
+                })
+            }
         };
 
         let pp = s.project.path.clone();
         let content = tokio::task::spawn_blocking(move || doc.read_content(&pp))
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
             .map_err(McpServerError::Scrivener)?;
 
         let text = content.plain_text.unwrap_or_default();
-        if text.trim().is_empty() { return Ok("Document is empty".to_string()); }
+        if text.trim().is_empty() {
+            return Ok("Document is empty".to_string());
+        }
 
-        let result = tokio::task::spawn_blocking(move || {
-            match writing_analysis::analyze_readability(&text) {
-                Ok(scores) => serde_json::to_string_pretty(&serde_json::json!({
-                    "flesch_kincaid_grade": scores.flesch_kincaid_grade,
-                    "flesch_reading_ease": scores.flesch_reading_ease,
-                    "smog_index": scores.smog_index,
-                    "coleman_liau_index": scores.coleman_liau_index,
-                    "automated_readability_index": scores.automated_readability_index,
-                })).unwrap_or_default(),
-                Err(e) => format!("Analysis error: {}", e),
-            }
-        })
-        .await
-        .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+        let result =
+            tokio::task::spawn_blocking(move || {
+                match writing_analysis::analyze_readability(&text) {
+                    Ok(scores) => serde_json::to_string_pretty(&serde_json::json!({
+                        "flesch_kincaid_grade": scores.flesch_kincaid_grade,
+                        "flesch_reading_ease": scores.flesch_reading_ease,
+                        "smog_index": scores.smog_index,
+                        "coleman_liau_index": scores.coleman_liau_index,
+                        "automated_readability_index": scores.automated_readability_index,
+                    }))
+                    .unwrap_or_default(),
+                    Err(e) => format!("Analysis error: {}", e),
+                }
+            })
+            .await
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?;
 
         Ok(result)
     }
@@ -1038,8 +1389,12 @@ impl ScrivenerMcp {
         let pp = s.project_path.display().to_string();
         let category = params.category.as_deref().unwrap_or("general");
 
-        self.database.upsert_memory(&pp, &params.key, &params.value, category)?;
-        Ok(format!("Memory updated: key='{}', category='{}'", params.key, category))
+        self.database
+            .upsert_memory(&pp, &params.key, &params.value, category)?;
+        Ok(format!(
+            "Memory updated: key='{}', category='{}'",
+            params.key, category
+        ))
     }
 
     async fn do_get_memory(&self, params: GetMemoryParams) -> crate::error::Result<String> {
@@ -1047,7 +1402,9 @@ impl ScrivenerMcp {
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let pp = s.project_path.display().to_string();
 
-        let entries = self.database.get_memory(&pp, params.key.as_deref(), params.category.as_deref())?;
+        let entries =
+            self.database
+                .get_memory(&pp, params.key.as_deref(), params.category.as_deref())?;
 
         if entries.len() == 1 {
             Ok(serde_json::to_string_pretty(&entries[0])?)
@@ -1056,14 +1413,20 @@ impl ScrivenerMcp {
         }
     }
 
-    async fn do_check_consistency(&self, _params: CheckConsistencyParams) -> crate::error::Result<String> {
+    async fn do_check_consistency(
+        &self,
+        _params: CheckConsistencyParams,
+    ) -> crate::error::Result<String> {
         let session = self.session.lock().await;
         let s = session.as_ref().ok_or(McpServerError::NoProjectOpen)?;
         let pp = s.project_path.display().to_string();
 
         let entries = self.database.get_memory(&pp, None, None)?;
         if entries.is_empty() {
-            return Ok("No memory entries found. Use update_memory to store project information first.".to_string());
+            return Ok(
+                "No memory entries found. Use update_memory to store project information first."
+                    .to_string(),
+            );
         }
 
         let report = serde_json::json!({
@@ -1082,7 +1445,9 @@ impl ScrivenerMcp {
         let project = s.project.clone();
         let stats = tokio::task::spawn_blocking(move || project.statistics())
             .await
-            .map_err(|e| McpServerError::InvalidParameter { message: e.to_string() })?;
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?;
 
         let entries = self.database.get_memory(&pp, None, None)?;
 

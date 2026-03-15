@@ -157,7 +157,12 @@ impl Database {
         Ok(())
     }
 
-    pub fn log_session(&self, project_path: &str, action: &str, details: Option<&str>) -> Result<()> {
+    pub fn log_session(
+        &self,
+        project_path: &str,
+        action: &str,
+        details: Option<&str>,
+    ) -> Result<()> {
         let conn = self.conn.lock().unwrap();
         let now = chrono::Utc::now().to_rfc3339();
         conn.execute(

@@ -10,7 +10,11 @@ use rmcp::ServiceExt;
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
-#[command(name = "scrivener-mcp", version, about = "MCP server for Scrivener 3 projects")]
+#[command(
+    name = "scrivener-mcp",
+    version,
+    about = "MCP server for Scrivener 3 projects"
+)]
 struct Cli {
     /// Path to the SQLite database file
     #[arg(long, default_value = "~/.scrivener-mcp/data.db")]
@@ -28,8 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Init tracing to stderr (stdout is reserved for JSON-RPC)
     tracing_subscriber::fmt()
         .with_env_filter(
-            EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| EnvFilter::new(&cli.log_level)),
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(&cli.log_level)),
         )
         .with_writer(std::io::stderr)
         .init();
