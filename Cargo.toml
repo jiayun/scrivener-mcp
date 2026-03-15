@@ -14,8 +14,8 @@ path = "src/main.rs"
 
 [dependencies]
 rmcp = { version = "1.2", features = ["server", "transport-io", "macros"] }
-scrivener = "0.1"
-writing-analysis = "0.1"
+scrivener = ">=0.1.2"
+writing-analysis = ">=0.1.1"
 rusqlite = { version = "0.38", features = ["bundled"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }

@@ -891,9 +891,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scrivener"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f48f9ed169e0ffe3954d116692f42a2110e9b1389070948ef92a168cd8981042"
+checksum = "5c4dd66387f0d06f0d9e002db1abab0aa7d2e4881231ed0163fa3771b59ec7a6"
 dependencies = [
  "chrono",
  "quick-xml",
@@ -1526,9 +1526,9 @@ dependencies = [
 
 [[package]]
 name = "writing-analysis"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d375a9bcce6c12bd983abc0f9d78a53101b998007940dbf5607692934715bc44"
+checksum = "6ff0175b750c5da7fd3fed85e203fde0fd597c76dab4588292c5846712a06d00"
 dependencies = [
  "regex",
  "thiserror",

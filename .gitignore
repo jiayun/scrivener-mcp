@@ -21,3 +21,6 @@ target
 #.idea/
 
 .claude/settings.local.json
+
+# Test Scrivener projects
+test-projects/
