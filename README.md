@@ -141,6 +141,10 @@ Options:
 | Memory | `update_memory` | Store/update persistent project memory |
 | Memory | `get_memory` | Retrieve stored memory entries |
 
+## Acknowledgments
+
+Inspired by [dcondrey/scrivener-mcp](https://github.com/dcondrey/scrivener-mcp) (MIT License, Copyright 2025 David Condrey).
+
 ## License
 
 MIT
