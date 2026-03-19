@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-03-19
+
+### Added
+
+- Custom metadata support in `update_metadata` tool — set or update user-defined metadata fields via `custom_metadata` parameter (fixes #1)
+
 ## [0.1.0] - 2026-03-15
 
 ### Added

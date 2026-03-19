@@ -395,7 +395,7 @@ impl ScrivenerMcp {
 
     #[tool(
         name = "update_metadata",
-        description = "Update document metadata: synopsis, notes, and/or keywords"
+        description = "Update document metadata: synopsis, notes, keywords, and/or custom metadata"
     )]
     async fn update_metadata(
         &self,
@@ -1040,6 +1040,13 @@ impl ScrivenerMcp {
             if let Some(kws) = &params.remove_keywords {
                 for kw in kws {
                     doc.remove_keyword(kw);
+                }
+            }
+            if let Some(cm) = &params.custom_metadata {
+                for (key, value) in cm {
+                    doc.metadata
+                        .custom_metadata
+                        .insert(key.clone(), value.clone());
                 }
             }
 

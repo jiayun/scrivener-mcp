@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rmcp::schemars::{self, JsonSchema};
 use serde::{Deserialize, Serialize};
 
@@ -95,6 +97,10 @@ pub struct UpdateMetadataParams {
     /// Keywords to remove.
     #[serde(default)]
     pub remove_keywords: Option<Vec<String>>,
+
+    /// Custom metadata key-value pairs to set or update.
+    #[serde(default)]
+    pub custom_metadata: Option<HashMap<String, String>>,
 }
 
 // ── Search Tool Params ──────────────────────────────────────────
