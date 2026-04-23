@@ -2,7 +2,7 @@
 
 MCP server for [Scrivener 3](https://www.literatureandlatte.com/scrivener/overview) projects — AI-powered writing assistant tools.
 
-Provides 28 tools that let AI assistants (Claude, etc.) read, write, analyze, and manage Scrivener projects through the [Model Context Protocol](https://modelcontextprotocol.io/).
+Provides 29 tools that let AI assistants (Claude, etc.) read, write, analyze, and manage Scrivener projects through the [Model Context Protocol](https://modelcontextprotocol.io/).
 
 ## Features
 
@@ -121,6 +121,7 @@ Options:
 | Document | `read_document` | Read document content by UUID or title |
 | Document | `write_document` | Write content to a document |
 | Document | `create_document` | Create a new document |
+| Document | `create_folder` | Create a new folder |
 | Document | `delete_document` | Move document to trash |
 | Document | `rename_document` | Rename a document or folder |
 | Document | `move_document` | Move document to a different folder |

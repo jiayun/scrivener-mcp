@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-04-24
+
+### Added
+
+- New `create_folder` tool for creating binder folders — previously only `create_document` was available, leaving no way to create a new chapter/part container. The new tool mirrors `create_document` semantics (defaults to Draft folder, accepts optional `parent_uuid`). Total tools: 29.
+
 ## [0.1.1] - 2026-03-19
 
 ### Added

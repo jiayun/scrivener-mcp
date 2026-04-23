@@ -344,6 +344,17 @@ impl ScrivenerMcp {
     }
 
     #[tool(
+        name = "create_folder",
+        description = "Create a new folder in the specified parent folder (defaults to Draft)"
+    )]
+    async fn create_folder(&self, Parameters(params): Parameters<CreateFolderParams>) -> String {
+        match self.do_create_folder(params).await {
+            Ok(s) => s,
+            Err(e) => format!("Error: {}", e),
+        }
+    }
+
+    #[tool(
         name = "delete_document",
         description = "Move a document to the trash (can be recovered later)"
     )]
@@ -814,6 +825,55 @@ impl ScrivenerMcp {
         }
 
         let new_item = scrivener::BinderItem::Document(doc);
+
+        if let Some(parent_uuid_str) = &params.parent_uuid {
+            let parent_uuid = Uuid::parse_str(parent_uuid_str).map_err(McpServerError::Uuid)?;
+            s.project.binder.root.push(new_item);
+            s.project
+                .binder
+                .move_item(new_uuid, Some(parent_uuid))
+                .map_err(McpServerError::Scrivener)?;
+        } else {
+            let first_folder = s.project.binder.root.iter().find_map(|item| {
+                if let scrivener::BinderItem::Folder(f) = item {
+                    Some(f.uuid)
+                } else {
+                    None
+                }
+            });
+            s.project.binder.root.push(new_item);
+            if let Some(fid) = first_folder {
+                s.project
+                    .binder
+                    .move_item(new_uuid, Some(fid))
+                    .map_err(McpServerError::Scrivener)?;
+            }
+        }
+
+        let project = s.project.clone();
+        tokio::task::spawn_blocking(move || project.save())
+            .await
+            .map_err(|e| McpServerError::InvalidParameter {
+                message: e.to_string(),
+            })?
+            .map_err(McpServerError::Scrivener)?;
+
+        Ok(serde_json::to_string_pretty(
+            &serde_json::json!({"uuid": new_uuid.to_string(), "title": params.title}),
+        )?)
+    }
+
+    async fn do_create_folder(&self, params: CreateFolderParams) -> crate::error::Result<String> {
+        let mut session = self.session.lock().await;
+        let s = session.as_mut().ok_or(McpServerError::NoProjectOpen)?;
+
+        let new_uuid = Uuid::new_v4();
+        let folder = scrivener::Folder {
+            uuid: new_uuid,
+            title: params.title.clone(),
+            ..Default::default()
+        };
+        let new_item = scrivener::BinderItem::Folder(folder);
 
         if let Some(parent_uuid_str) = &params.parent_uuid {
             let parent_uuid = Uuid::parse_str(parent_uuid_str).map_err(McpServerError::Uuid)?;

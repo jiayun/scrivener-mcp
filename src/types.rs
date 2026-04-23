@@ -47,6 +47,16 @@ pub struct CreateDocumentParams {
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
+pub struct CreateFolderParams {
+    /// Title for the new folder.
+    pub title: String,
+
+    /// UUID of the parent folder (defaults to Draft folder).
+    #[serde(default)]
+    pub parent_uuid: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
 pub struct DeleteDocumentParams {
     /// Document UUID or title to delete (moves to trash).
     pub identifier: String,

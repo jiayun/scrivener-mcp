@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Rust MCP server exposing 28 tools for AI assistants to interact with Scrivener 3 writing projects. Uses stdio transport (JSON-RPC over stdin/stdout). Single binary: `scrivener-mcp`.
+Rust MCP server exposing 29 tools for AI assistants to interact with Scrivener 3 writing projects. Uses stdio transport (JSON-RPC over stdin/stdout). Single binary: `scrivener-mcp`.
 
 ## Build & Development Commands
 
@@ -22,7 +22,7 @@ cargo fmt                      # Auto-format
 
 ## Architecture
 
-**Entry flow:** `main.rs` (CLI parsing, tracing init, stdio server start) → `server.rs` (ScrivenerMcp struct, all 28 tool handlers) → `services/` (persistence layer)
+**Entry flow:** `main.rs` (CLI parsing, tracing init, stdio server start) → `server.rs` (ScrivenerMcp struct, all 29 tool handlers) → `services/` (persistence layer)
 
 **Key modules:**
 - `server.rs` — Core server with tool routing via `rmcp` macros. Tools are grouped into 7 router blocks (project, document, search, compile, analysis, memory, stats) composed with `+` operator. Each tool has a public wrapper returning `String` and a private `do_*` implementation returning `Result<String>`.

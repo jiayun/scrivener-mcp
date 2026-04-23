@@ -1,6 +1,6 @@
 [package]
 name = "scrivener-mcp"
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 description = "MCP server for Scrivener 3 projects — AI-powered writing assistant tools"

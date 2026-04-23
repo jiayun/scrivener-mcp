@@ -197,7 +197,7 @@ CREATE TABLE IF NOT EXISTS session_history (
 - CLI args: `--db-path`, `--log-level`, `--version`
 - Improve error messages with context
 - Add `get_writing_stats` and `get_session_info` tools
-- Verify all 28 tools work end-to-end
+- Verify all 29 tools work end-to-end
 - `cargo clippy` clean, `cargo test` passes
 - README with installation and configuration instructions
 

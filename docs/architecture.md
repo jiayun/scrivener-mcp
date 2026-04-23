@@ -76,7 +76,7 @@ tests/
 | Module | Visibility | Responsibility |
 |--------|-----------|----------------|
 | `main.rs` | binary | CLI arg parsing (clap), tracing init, stdio transport, server start |
-| `server.rs` | internal | `ScrivenerMcp` struct with all 28 tools via multiple `#[tool_router]` blocks, `ServerHandler` impl |
+| `server.rs` | internal | `ScrivenerMcp` struct with all 29 tools via multiple `#[tool_router]` blocks, `ServerHandler` impl |
 | `services/project.rs` | internal | `ProjectSession` struct definition |
 | `services/database.rs` | internal | SQLite connection, memory/cache/session queries |
 | `types.rs` | internal | Tool input/output types with `serde` + `schemars` derives |
@@ -175,13 +175,13 @@ Tool input types derive `schemars::JsonSchema`, which rmcp uses to generate JSON
 | Category | Count | Tools |
 |----------|-------|-------|
 | Project | 4 | open_project, close_project, refresh_project, get_structure |
-| Document | 8 | read_document, write_document, create_document, delete_document, rename_document, move_document, get_document_info, update_metadata |
+| Document | 9 | read_document, write_document, create_document, create_folder, delete_document, rename_document, move_document, get_document_info, update_metadata |
 | Search | 4 | search_content, list_trash, search_trash, recover_document |
 | Compilation | 3 | compile_documents, export_project, get_statistics |
 | Analysis | 3 | analyze_document, get_word_count, analyze_readability |
 | Memory | 4 | update_memory, get_memory, check_consistency, get_project_summary |
 | Stats | 2 | get_writing_stats, get_session_info |
-| **Total** | **28** | |
+| **Total** | **29** | |
 
 See `mcp-tools-spec.md` for full tool specifications.
 

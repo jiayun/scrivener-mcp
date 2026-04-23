@@ -117,11 +117,11 @@ This document maps all tools from the [dcondrey/scrivener-mcp](https://github.co
 
 | Status | Count | Description |
 |--------|-------|-------------|
-| ✅ Phase 2 | 28 | Core project operations, document CRUD, search, analysis, memory |
+| ✅ Phase 2 | 29 | Core project operations, document CRUD, search, analysis, memory |
 | ⏳ Phase 3 | 16 | Semantic search, vector store, fractal memory, entity tracking |
 | ❌ Not planned | 14 | AI content generation, async queues, real-time streaming, multi-agent |
 | **Total dcondrey** | **58** | |
-| **scrivener-mcp only** | **4** | analyze_readability, get_project_summary, get_writing_stats, get_session_info |
+| **scrivener-mcp only** | **5** | analyze_readability, create_folder, get_project_summary, get_writing_stats, get_session_info |
 
 ### Design Philosophy Differences
 

@@ -1,6 +1,6 @@
 # MCP Tools Specification
 
-This document defines all 28 MCP tools for Phase 2 of scrivener-mcp. Each tool maps to underlying `scrivener` or `writing-analysis` crate APIs.
+This document defines all 29 MCP tools for Phase 2 of scrivener-mcp. Each tool maps to underlying `scrivener` or `writing-analysis` crate APIs.
 
 ---
 
@@ -82,7 +82,7 @@ Returns the hierarchical binder structure of the project.
 
 ---
 
-## Document Tools (8)
+## Document Tools (9)
 
 ### read_document
 
@@ -181,6 +181,38 @@ Creates a new document in the project.
 **Output:** JSON with new document's UUID, title, and path.
 
 **Maps to:** Create `Document` → add to binder → write content → `Project::save()`
+
+---
+
+### create_folder
+
+Creates a new folder in the project.
+
+```rust
+#[tool(name = "create_folder", description = "Create a new folder in the specified parent folder (defaults to Draft)")]
+```
+
+**Input Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Title for the new folder"
+    },
+    "parent_uuid": {
+      "type": "string",
+      "description": "UUID of parent folder (optional, defaults to Draft)"
+    }
+  },
+  "required": ["title"]
+}
+```
+
+**Output:** JSON with new folder's UUID and title.
+
+**Maps to:** Create `Folder` → add to binder → `Project::save()`
 
 ---
 
